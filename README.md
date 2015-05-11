@@ -1,0 +1,2 @@
+# Eraser
+HTML5 CANVAS 橡皮擦除DEMO
