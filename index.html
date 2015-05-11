@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Eraser</title>
+
+<body>
+	<canvas></canvas> 
+  <script>
+(function(bodyStyle) {
+    bodyStyle.mozUserSelect = 'none';
+    bodyStyle.webkitUserSelect = 'none';
+    //
+    var down_up=0;
+    //新建立一个  图片对象
+    var img = new Image();
+    //找到 html里的 canvans对象
+    var canvas = document.querySelector('canvas');
+    //设置canvas背景为透明
+    canvas.style.backgroundColor = 'transparent';
+    //设置 canvas为绝对定位
+    canvas.style.position = 'absolute';
+    //当图片加载完毕时执行以下代码
+    img.addEventListener('load',
+    function(e) {
+    	//绘图环境
+        var ctx;
+        //图片的宽
+        var w = img.width,
+        //图片的高
+        h = img.height;
+        //canvans 自身的左边距离
+        var offsetX = canvas.offsetLeft,
+        //canvans 自身的上边距离
+        offsetY = canvas.offsetTop;
+        //禁止按下
+        var mousedown = false;
+
+        function layer(ctx) {
+        	//找到html元素当中的虚的图片
+            var img = document.getElementById("lamp");
+            //把此张作为canvans的贴图对象
+            var pat = ctx.createPattern(img, "repeat");
+            ctx.fillStyle = pat;
+            ctx.fillRect(0, 0, w, h);
+            //把这里的贴图 渲染到canvans当中
+        }
+
+        function eventDown(e) {
+            e.preventDefault();
+            mousedown = true;
+        }
+
+        function eventUp(e) {
+        	down_up++;
+            e.preventDefault();
+            mousedown = false;
+        }
+
+        function eventMove(e) {
+            e.preventDefault();
+            if (mousedown) {
+                if (e.changedTouches) {
+                    e = e.changedTouches[e.changedTouches.length - 1];
+                }
+                var x = (e.clientX + document.body.scrollLeft || e.pageX) - offsetX || 0,
+                y = (e.clientY + document.body.scrollTop || e.pageY) - offsetY || 0;
+               	//如果手指抬起 擦除超过2次则 全部清除
+                if(down_up>=2){
+                	ctx. beginPath();
+	                ///ctx. arc(x, y, 20, 0, Math.PI * 2);
+	             	ctx.fillRect(0, 0, w, h);
+	                ctx.fill();
+	                ctx.closePath();
+                }else{
+                	ctx. beginPath();
+	                ctx. arc(x, y, 20, 0, Math.PI * 2);
+	             	//ctx.fillRect(x,y,150,100);
+	                ctx.fill();
+	                ctx.closePath();
+                }
+            }
+        }
+        //canvas的宽是 图片的宽
+        canvas.width = w;
+        //canvas的高是 图片的高
+        canvas.height = h;
+        //设置canvas的背景位 空图片对象里 （下边指定的图片）
+        canvas.style.backgroundImage = 'url(' + img.src + ')';
+        //设置canvas的2d 绘图环境
+        ctx = canvas.getContext('2d');
+        //canvas 填充透明
+        ctx.fillStyle = 'transparent';
+        //填充边界为 canvans的面积
+        ctx.fillRect(0, 0, w, h);
+        layer(ctx);
+        //在源图像外显示目标图像。只有源图像外的目标图像部分会被显示，源图像是透明的。
+        ctx.globalCompositeOperation = 'destination-out';
+
+        canvas.addEventListener('touchstart', eventDown);//手指按下
+        canvas.addEventListener('touchend', eventUp);//手指抬起
+        canvas.addEventListener('touchmove', eventMove);//手指移动
+        canvas.addEventListener('mousedown', eventDown);
+        canvas.addEventListener('mouseup', eventUp);
+        canvas.addEventListener('mousemove', eventMove);
+
+    });
+    img.src = 'images/target_cover.jpg';
+})(document.body.style);
+
+
+
+</script> 
+  <img id="lamp" src="images/souce_cover.jpg" /> </br>
+   <strong>用鼠标和手指擦除上述图片，显示清晰的图片。</strong>
+</body>
+</html>
