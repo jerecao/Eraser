@@ -5,114 +5,196 @@
 	<title>Eraser</title>
     <meta name="viewport" content="width=640,user-scalable=no,minimum-scale=1.0,maximum-scale=1.0" />
 <body>
-	<canvas></canvas>
-    <img id="lamp" src="images/souce_cover.jpg" /> </br>
-  <script>
-(function(bodyStyle) {
-    bodyStyle.mozUserSelect = 'none';
-    bodyStyle.webkitUserSelect = 'none';
-    //
-    var down_up=0;
-    //新建立一个  图片对象
-    var img = new Image();
-    //找到 html里的 canvans对象
-    var canvas = document.querySelector('canvas');
-    //设置canvas背景为透明
-    canvas.style.backgroundColor = 'transparent';
-    //设置 canvas为绝对定位
-    canvas.style.position = 'absolute';
-    //当图片加载完毕时执行以下代码
-    img.addEventListener('load',
-    function(e) {
-    	//绘图环境
-        var ctx;
-        //图片的宽
-        var w = img.width,
-        //图片的高
-        h = img.height;
-        //canvans 自身的左边距离
-        var offsetX = canvas.offsetLeft,
-        //canvans 自身的上边距离
-        offsetY = canvas.offsetTop;
-        //禁止按下
-        var mousedown = false;
+<style>
+    *{
+        margin:0px;
+        padding:0px;
 
-        function layer(ctx) {
-        	//找到html元素当中的虚的图片
-            var img = document.getElementById("lamp");
-            //把此张作为canvans的贴图对象
-            var pat = ctx.createPattern(img, "repeat");
-            ctx.fillStyle = pat;
-            ctx.fillRect(0, 0, w, h);
-            //把这里的贴图 渲染到canvans当中
-        }
+    }
+    html,body{
+        width:100%;
+        height:100%;
+        margin:0px auto;
+        position: relative;
+    }
+    .Eraser{
+        position:absolute;
+       
+        width:500px;
+        height:332px;
 
-        function eventDown(e) {
-            e.preventDefault();
-            mousedown = true;
-        }
+    }
+</style>
+<div class="Eraser" id="Eraser">
 
-        function eventUp(e) {
-        	down_up++;
-            e.preventDefault();
-            mousedown = false;
-        }
+    <img src="images/souce_cover.jpg" style="position:absolute;width:500px; height:332px; left:0px; top:0px;" />
 
-        function eventMove(e) {
-            e.preventDefault();
-            if (mousedown) {
-                if (e.changedTouches) {
-                    e = e.changedTouches[e.changedTouches.length - 1];
-                }
-                var x = (e.clientX + document.body.scrollLeft || e.pageX) - offsetX || 0,
-                y = (e.clientY + document.body.scrollTop || e.pageY) - offsetY || 0;
-               	//如果手指抬起 擦除超过2次则 全部清除
-                if(down_up>=2){
-                	ctx. beginPath();
-	                ///ctx. arc(x, y, 20, 0, Math.PI * 2);
-	             	ctx.fillRect(0, 0, w, h);
-	                ctx.fill();
-	                ctx.closePath();
-                }else{
-                	ctx. beginPath();
-	                ctx. arc(x, y, 20, 0, Math.PI * 2);
-	             	//ctx.fillRect(x,y,150,100);
-	                ctx.fill();
-	                ctx.closePath();
-                }
+    <canvas texsrc="images/souce_cover.jpg" imgsrc='images/target_cover.jpg' width="500" height="332" style='position:absolute;width:500px;height:332px; left:0px; top:0px;background: transparent;' id="CanvasDoodle"></canvas>
+
+</div>	
+<script>
+//images/souce_cover.jpg   被擦除的图像
+//images/target_cover.jpg   目标图像  
+function CanvasDoodle(canvas) {
+
+    this.canvas = canvas;
+
+    this.ctx = canvas.getContext('2d');
+
+    this.imgSrc = canvas.getAttribute("imgsrc");
+
+    this.width = canvas.width;
+
+    this.height = canvas.height;
+
+    this.left = parseInt(canvas.style.left);
+
+    this.top = parseInt(canvas.style.top);
+
+    this.touchX = 0;
+
+    this.touchY = 0;
+
+    this.requireLoop = false;
+
+    this.init();
+
+}
+
+CanvasDoodle.prototype = {
+
+    init: function() {
+        var touch_event = this.test_ua();
+
+        document.body.setAttribute("needRefresh", "true");
+
+        var _self = this;
+
+        this.img = new Image();
+
+        this.img.src = this.imgSrc;
+
+        console.log(touch_event['touchstart']);
+
+        this.canvas.addEventListener(touch_event['touchstart'],
+        function(e) {
+            var UA = window.navigator.userAgent;
+            if (! (/ipad|iphone|android|mobile/i.test(UA))) {
+                var touchs = e;
+                var posX = touchs.clientX;
+                var posY = touchs.clientY;
+            } else {
+                var touchs = e.changedTouches[0];
+                var posX = touchs.pageX;
+                var posY = touchs.pageY;
             }
+
+            e.preventDefault();
+
+            _self.requireLoop = true;
+            console.log( _self.left)
+            _self.touchX = posX - _self.left,
+            _self.touchY = posY - _self.top;
+
+            _self.loop();
+
+        },
+        false);
+
+        this.canvas.addEventListener(touch_event['touchmove'],
+        function(e) {
+            var UA = window.navigator.userAgent;
+            if (! (/ipad|iphone|android|mobile/i.test(UA))) {
+                var touchs = e;
+                var posX = touchs.clientX;
+                var posY = touchs.clientY;
+            } else {
+                var touchs = e.changedTouches[0];
+                var posX = touchs.pageX;
+                var posY = touchs.pageY;
+            }
+            e.preventDefault();
+
+            if (_self.requireLoop) {
+
+                _self.touchX = posX - _self.left,
+                _self.touchY = posY - _self.top;
+
+            }
+
+        },
+        false);
+
+        this.canvas.addEventListener(touch_event['touchend'],
+        function(e) {
+
+            e.preventDefault();
+
+            _self.requireLoop = false;
+
+        });
+
+    },
+    test_ua: function() {
+        var touch_event = {
+            touchstart: 'touchstart',
+            touchmove: 'touchmove',
+            touchend: 'touchend',
+
         }
-        //canvas的宽是 图片的宽
-        canvas.width = w;
-        //canvas的高是 图片的高
-        canvas.height = h;
-        //设置canvas的背景位 空图片对象里 （下边指定的图片）
-        canvas.style.backgroundImage = 'url(' + img.src + ')';
-        //设置canvas的2d 绘图环境
-        ctx = canvas.getContext('2d');
-        //canvas 填充透明
-        ctx.fillStyle = 'transparent';
-        //填充边界为 canvans的面积
-        ctx.fillRect(0, 0, w, h);
-        layer(ctx);
-        //在源图像外显示目标图像。只有源图像外的目标图像部分会被显示，源图像是透明的。
-        ctx.globalCompositeOperation = 'destination-out';
 
-        canvas.addEventListener('touchstart', eventDown);//手指按下
-        canvas.addEventListener('touchend', eventUp);//手指抬起
-        canvas.addEventListener('touchmove', eventMove);//手指移动
-        canvas.addEventListener('mousedown', eventDown);
-        canvas.addEventListener('mouseup', eventUp);
-        canvas.addEventListener('mousemove', eventMove);
+        var UA = window.navigator.userAgent;
+        if (! (/ipad|iphone|android|mobile/i.test(UA))) {
+            touch_event['touchstart'] = 'mousedown';
+            touch_event['touchmove'] = 'mousemove';
+            touch_event['touchend'] = 'mouseup';
+        }
 
-    });
-    img.src = 'images/target_cover.jpg';
-})(document.body.style);
+        return touch_event
+    },
+    loop: function() {
+
+        if (this.requireLoop) {
+
+            var _self = this;
+            var requestAnimationFrame = window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.requestAnimationFrame;
+            requestAnimationFrame(function() {
+                _self.loop()
+            });
+
+            this.render();
+
+        }
+
+    },
+
+    render: function() {
+
+        var _self = this;
+
+        _self.ctx.save();
+
+        _self.ctx.beginPath();
+
+        _self.ctx.arc(_self.touchX, _self.touchY, 20, 0, Math.PI * 2, true);
+
+        _self.ctx.clip();
+
+        _self.ctx.drawImage(_self.img, 0, 0, _self.width, _self.height, 0, 0, _self.width, _self.height);
+
+        _self.ctx.restore();
+
+    }
+
+};
+
+new CanvasDoodle(document.getElementById('CanvasDoodle'));
 
 
+   
 
 </script> 
   
-   <strong><h1>用鼠标和手指擦除上述图片，显示清晰的图片。</h1></strong>
+   <strong style="position:absolute;left:0px;top:400px;"><h1>用鼠标和手指擦除上述图片，显示清晰的图片。</h1></strong>
 </body>
 </html>
